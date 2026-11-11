@@ -46,3 +46,50 @@ classDiagram
     Bill *-- "0..*" BillPart : bill_items
     Bill *-- "0..*" MenuOption : order
 ```
+
+## Sequence diagram
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Main as main()
+    participant Offer as offerMenu()
+    participant Display as print_menu()
+    participant Offers as offers inventory
+    participant Order as order Bill
+    participant Compute as Bill::computeBill()
+    participant Print as current_bill.printBill()
+
+    Main->>Offer: offerMenu(options), passing a copy
+    activate Offer
+    Offer->>Display: print_menu(offers)
+    Display-->>User: Display menu items
+    Offer-->>User: Prompt for menu ID
+
+    loop While user answers y/Y
+        User->>Offer: Enter menu ID
+        Offer->>Offers: Look up ID
+        alt ID exists and quantity > 0
+            Offers-->>Offer: Return inventory item
+            Offer->>Offers: Decrement stock
+            Offer->>Order: Add item or increment its quantity
+            Offer-->>User: Ask whether to order more
+            User->>Offer: Enter y/Y or n
+        else ID exists but stock is exhausted
+            Offers-->>Offer: Return inventory item
+            Offer-->>User: Show exhausted-item message
+            Offer-->>User: Ask whether to order more
+            User->>Offer: Enter y/Y or n
+        else ID does not exist
+            Offers-->>Offer: Throw out_of_range
+            Offer-->>User: Show invalid-ID message
+        end
+    end
+
+    Offer-->>Main: Return order
+    deactivate Offer
+    Main->>Compute: computeBill(order)
+    Compute-->>Main: Return order with total_price
+    Main->>Print: printBill()
+    Print-->>User: Display items and final price
+```
